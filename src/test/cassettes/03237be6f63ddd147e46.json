@@ -1,0 +1,10 @@
+{
+  "invariants" : [ {
+    "expression" : "args != null",
+    "rationale" : "The main method's args parameter is typically not null.",
+    "meta" : [ {
+      "key" : "nullness",
+      "value" : "args not null"
+    } ]
+  } ]
+}
