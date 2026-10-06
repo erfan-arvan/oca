@@ -1,6 +1,6 @@
-# Daikon++
+# Oca
 
-Daikon++ checks LLM-proposed invariants of a Java program at runtime.
+Oca checks LLM-proposed invariants of a Java program at runtime.
 
 For every **method entry** and **method exit** in your sources, it:
 
@@ -26,7 +26,7 @@ Your original sources are never modified.
 ## Build the fat JAR
 
     ./gradlew clean shadowJar
-    # → build/libs/daikonplusplus.jar
+    # → build/libs/oca.jar
 
 `shadowJar` runs the whole test suite (offline replay) first. To build without running the tests:
 
@@ -36,42 +36,42 @@ Your original sources are never modified.
 
 ## Run
 
-There are three ways to invoke Daikon++. In all of them, an optional trailing integer `maxK` is the maximum number of invariants requested per program point (default **5**).
+There are three ways to invoke Oca. In all of them, an optional trailing integer `maxK` is the maximum number of invariants requested per program point (default **5**).
 
 ### 1. Single source root
 
-    java -jar build/libs/daikonplusplus.jar <srcRoot> <classpath> <mainClass> [maxK] [-- program args...]
+    java -jar build/libs/oca.jar <srcRoot> <classpath> <mainClass> [maxK] [-- program args...]
 
 - `<srcRoot>` — source tree to instrument (e.g. `/project/src`).
-- `<classpath>` — classpath used to compile and run your program. Use `:` as separator on macOS/Linux and `;` on Windows; use `""` or `.` if there are no dependencies. Do **not** include Daikon++ itself.
+- `<classpath>` — classpath used to compile and run your program. Use `:` as separator on macOS/Linux and `;` on Windows; use `""` or `.` if there are no dependencies. Do **not** include Oca itself.
 - `<mainClass>` — fully qualified main class (e.g. `com.example.Main`; for the default package, just `Main`).
 - `-- program args...` — everything after `--` is passed to your program unchanged.
 
 Example:
 
     export OPENAI_API_KEY=...
-    java -jar build/libs/daikonplusplus.jar /path/to/app/src . com.example.Main 5 -- foo bar
+    java -jar build/libs/oca.jar /path/to/app/src . com.example.Main 5 -- foo bar
 
 ### 2. Separate main and test sources
 
-    java -jar build/libs/daikonplusplus.jar <mainSrcRoot> <testSrcRoot> <mainClasspath> <testClasspath> <testMainClass> [maxK] [-- program args...]
+    java -jar build/libs/oca.jar <mainSrcRoot> <testSrcRoot> <mainClasspath> <testClasspath> <testMainClass> [maxK] [-- program args...]
 
 This mode is chosen automatically when the first two arguments are both existing directories. Only the **main** sources are instrumented. The test sources are compiled against them, and `<testMainClass>` is run.
 
 ### 3. External project (your own build/test script)
 
-    java -jar build/libs/daikonplusplus.jar --external-project \
+    java -jar build/libs/oca.jar --external-project \
          --project-root <projectRoot> --main-src <relMainSrc> [--test-src <relTestSrc>] \
          --runner-script <script.sh> [maxK]
 
 - The **whole project root** is copied to a working directory, and the main sources (`--main-src`, relative to the project root) are instrumented in that copy.
-- Instrumented sources are first compiled by Daikon++ itself to remove candidates that do not compile (see [Pipeline](#what-the-tool-does-pipeline)).
+- Instrumented sources are first compiled by Oca itself to remove candidates that do not compile (see [Pipeline](#what-the-tool-does-pipeline)).
   This uses `javac` with `DP_EXTERNAL_COMPILE_CP` as classpath, or your own script if `DP_COMPILE_MAIN_SCRIPT` is set.
 - Then `bash <script.sh>` is run from the root of the working copy. The script path may be absolute or relative to the project root.
 - Runtime results are collected through a shared-memory directory (`/dev/shm/daikonpp-<pid>`, or under `DP_SHM_BASE` if set), so they survive child JVMs being killed.
   If a run hangs, the guards that were executing are disabled and the script is run again.
 
-A shorter form, `java -jar daikonplusplus.jar <projectDir> --cmd <script.sh>`, treats `<projectDir>` as both project root and main source root.
+A shorter form, `java -jar oca.jar <projectDir> --cmd <script.sh>`, treats `<projectDir>` as both project root and main source root.
 
 ### Running with Gradle
 
@@ -182,7 +182,7 @@ Rules (`<RULE>` / `<Rule>`):
 
 ### Dry run (token and cost estimate)
 
-With `DP_LLM_DRY_RUN=true`, Daikon++ scans the program points and builds every prompt exactly as a normal run would, but **sends nothing**:
+With `DP_LLM_DRY_RUN=true`, Oca scans the program points and builds every prompt exactly as a normal run would, but **sends nothing**:
 
 - No API key is needed.
 - No working copy is created, and your sources are only read.
@@ -279,7 +279,7 @@ The results section looks like:
 
 # E2E Test Suite (Record → Replay)
 
-The end-to-end tests check that Daikon++ produces stable results by comparing pipeline outputs against versioned snapshots.
+The end-to-end tests check that Oca produces stable results by comparing pipeline outputs against versioned snapshots.
 
 The workflow:
 1. **Record** snapshots with real LLM calls (writes `expected/` and cassettes).

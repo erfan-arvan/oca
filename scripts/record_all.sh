@@ -6,7 +6,7 @@
 #   src/test/resources/daikonpp-pipeline/
 # and invokes `record_one.sh` for each case that contains an `input/` folder.
 #
-# It runs the Daikon++ pipeline with *real* LLM calls (DP_DISABLE_REAL_LLM unset),
+# It runs the Oca pipeline with *real* LLM calls (DP_DISABLE_REAL_LLM unset),
 # regenerates `expected/registry.jsonl` and `expected/outcomes.jsonl` for each case,
 # and stores all corresponding LLM cassettes under:
 #   src/test/cassettes/

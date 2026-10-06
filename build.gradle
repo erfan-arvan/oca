@@ -24,7 +24,7 @@ java {
 }
 
 application {
-    mainClass = 'edu.njit.jerse.daikonplusplus.App'
+    mainClass = 'edu.njit.jerse.oca.App'
 }
 
 dependencies {
@@ -134,14 +134,14 @@ tasks.named("assemble") { dependsOn tasks.named("shadowJar") }
 
 
 tasks.named('shadowJar') {
-    archiveBaseName.set('daikonplusplus')
+    archiveBaseName.set('oca')
     archiveVersion.set('')
     archiveClassifier.set('')
 
     manifest { attributes 'Main-Class': application.mainClass.get() }
 
     // Shade/relocate JavaParser so CF can't see our version
-    relocate 'com.github.javaparser', 'edu.njit.jerse.daikonplusplus.shaded.javaparser'
+    relocate 'com.github.javaparser', 'edu.njit.jerse.oca.shaded.javaparser'
 
     // Ensure tests (replay) pass before packaging
     dependsOn tasks.test

@@ -2,7 +2,7 @@
 # -----------------------------------------------------------------------------
 # record_one.sh — Record an E2E test snapshot for a single case.
 #
-# This script runs the Daikon++ pipeline on one test case (e.g., 00-baseline),
+# This script runs the Oca pipeline on one test case (e.g., 00-baseline),
 # allowing *real* LLM calls and saving both the expected outputs and LLM
 # cassettes for deterministic replay in future tests.
 #
@@ -50,7 +50,7 @@ fi
 # -------------------------------
 ( cd "$ROOT" && ./gradlew -q -x test shadowJar )
 
-JAR="$ROOT/build/libs/daikonplusplus.jar"
+JAR="$ROOT/build/libs/oca.jar"
 if [[ ! -f "$JAR" ]]; then
   echo "Missing fat jar: $JAR"
   exit 3

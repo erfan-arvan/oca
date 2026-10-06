@@ -2,14 +2,14 @@
 # baseline_capture.sh
 #
 # Purpose:
-#   Run Daikon++ on the sample project once and capture the *complete*
+#   Run Oca on the sample project once and capture the *complete*
 #   set of artifacts produced by the pipeline as a stable baseline for
 #   regression testing.  This baseline represents the “ground truth”
 #   outputs of the LLM + pipeline at a known commit and model.
 #
 # What it does:
-#   1. Locates a built Daikon++ JAR automatically (or uses $JAR if set).
-#   2. Runs Daikon++ on sample-project/src sample.Main with MAXK invariants.
+#   1. Locates a built Oca JAR automatically (or uses $JAR if set).
+#   2. Runs Oca on sample-project/src sample.Main with MAXK invariants.
 #   3. Copies key outputs into testdata/daikonpp_runs/baseline/:
 #        - app-console.log       (full console output)
 #        - registry.jsonl        (final filtered LLM invariants)
@@ -23,7 +23,7 @@
 #     ./baseline_capture.sh
 #
 # Environment variables:
-#     JAR=path/to/daikonplusplus.jar   # optional override
+#     JAR=path/to/oca.jar   # optional override
 #     DP_OPENAI_MODEL=gpt-4o-mini      # recorded in manifest
 #
 # After running, commit the baseline directory to git:
@@ -38,7 +38,7 @@
 set -euo pipefail
 JAR="${JAR:-}"
 if [[ -z "${JAR}" ]]; then
-  for cand in "build/libs/daikonplusplus-all.jar" build/libs/daikonplusplus-all-*.jar build/libs/*-all.jar build/libs/*-shadow.jar build/libs/daikonplusplus.jar build/libs/*.jar; do [[ -f "$cand" ]] && JAR="$cand" && break; done
+  for cand in "build/libs/oca-all.jar" build/libs/oca-all-*.jar build/libs/*-all.jar build/libs/*-shadow.jar build/libs/oca.jar build/libs/*.jar; do [[ -f "$cand" ]] && JAR="$cand" && break; done
 fi
 [[ -f "${JAR}" ]] || { echo "jar not found; set JAR=path/to.jar"; exit 1; }
 SRC="${SRC:-sample-project/src}"
