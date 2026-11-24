@@ -415,20 +415,7 @@ public final class App {
     // 🔥 SETUP SYMBOL SOLVER (REQUIRED FOR TYPE RESOLUTION)
     // ============================================================
 
-    CombinedTypeSolver solver = new CombinedTypeSolver();
-
-    solver.add(new ReflectionTypeSolver());
-    solver.add(new JavaParserTypeSolver(mainSrcRoot.toFile()));
-
-    JavaSymbolSolver symbolSolver = new JavaSymbolSolver(solver);
-
-    com.github.javaparser.ParserConfiguration config =
-        new com.github.javaparser.ParserConfiguration()
-            .setSymbolResolver(symbolSolver)
-            .setLanguageLevel(
-                com.github.javaparser.ParserConfiguration.LanguageLevel.BLEEDING_EDGE);
-
-    StaticJavaParser.setConfiguration(config);
+    StaticJavaParser.setConfiguration(parserConfiguration(mainSrcRoot));
 
     // Scan only MAIN sources for program points
     System.out.println(">>> Scanning MAIN sources under (WORKING COPY): " + mainSrcRoot);
@@ -459,7 +446,8 @@ public final class App {
 
     // --- Phase 1: parallel LLM proposals ---
     final Instant lmPhaseStart = PhaseTimer.start("LM phase");
-    final ExecutorService pool = Executors.newFixedThreadPool(cfg.threads());
+    final ExecutorService pool =
+        Executors.newFixedThreadPool(cfg.threads(), parserThreadFactory(mainSrcRoot));
     final CompletionService<List<InvariantRecord>> ecs = new ExecutorCompletionService<>(pool);
     final List<Future<List<InvariantRecord>>> allFutures = new ArrayList<>();
 
@@ -590,7 +578,8 @@ public final class App {
 
     // --- Phase 2: Injection on MAIN working copy ---
     final Instant injectionPhaseStart = PhaseTimer.start("Injection phase");
-    final ExecutorService injPool = Executors.newFixedThreadPool(Math.min(cfg.threads(), 8));
+    final ExecutorService injPool =
+        Executors.newFixedThreadPool(Math.min(cfg.threads(), 8), parserThreadFactory(mainSrcRoot));
     final Map<Path, Future<Set<UUID>>> injFutures = new LinkedHashMap<>();
     // Candidates whose guard could not be generated; they are never injected anywhere.
     final Set<UUID> failedToInject = new HashSet<>();
@@ -1298,6 +1287,41 @@ public final class App {
   }
 
   // ----- helpers -----
+
+  /**
+   * Creates the JavaParser configuration used for every parse: the newest language level, and
+   * symbol resolution against the JDK and the given source root.
+   *
+   * @param srcRoot root of the source tree used for type resolution
+   * @return a new parser configuration
+   */
+  static com.github.javaparser.ParserConfiguration parserConfiguration(Path srcRoot) {
+    CombinedTypeSolver solver = new CombinedTypeSolver();
+    solver.add(new ReflectionTypeSolver());
+    solver.add(new JavaParserTypeSolver(srcRoot.toFile()));
+    return new com.github.javaparser.ParserConfiguration()
+        .setSymbolResolver(new JavaSymbolSolver(solver))
+        .setLanguageLevel(com.github.javaparser.ParserConfiguration.LanguageLevel.BLEEDING_EDGE);
+  }
+
+  /**
+   * Returns a thread factory whose threads install their own {@link #parserConfiguration} before
+   * running any task. {@link StaticJavaParser}'s configuration is per thread, so worker threads
+   * would otherwise parse with JavaParser's defaults: an older language level and no symbol
+   * resolution.
+   *
+   * @param srcRoot root of the source tree used for type resolution
+   * @return a thread factory for executors that parse or resolve Java code
+   */
+  static ThreadFactory parserThreadFactory(Path srcRoot) {
+    ThreadFactory base = Executors.defaultThreadFactory();
+    return task ->
+        base.newThread(
+            () -> {
+              StaticJavaParser.setConfiguration(parserConfiguration(srcRoot));
+              task.run();
+            });
+  }
 
   /**
    * Processes a single program point by generating, deduplicating, and registering candidate
